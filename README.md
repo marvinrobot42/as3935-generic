@@ -99,7 +99,8 @@ fn main() -> ! {
     let int_reg = sensor.get_interrupt_register().unwrap();
     match int_reg {
       as3935_generic::data::INTType::NoiseHigh => log::info!(" AS3935 interrupt register = NoiseHigh"),
-      as3935_generic::data::INTType::Disturber => log::info!(" AS3935 interrupt register = Disturber"),    as3935_generic::data::INTType::Lightning => log::info!(" AS3935 interrupt register = Lightning : {:?}", int_reg),
+      as3935_generic::data::INTType::Disturber => log::info!(" AS3935 interrupt register = Disturber"),
+      as3935_generic::data::INTType::Lightning => log::info!(" AS3935 interrupt register = Lightning : {:?}", int_reg),
       as3935_generic::data::INTType::Nothing => log::info!(" AS3935 interrupt register = Nothing"),
     }
         
