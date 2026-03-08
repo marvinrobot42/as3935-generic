@@ -107,7 +107,9 @@ fn main() -> ! {
     info!(" distance to storm front in km (last lightning strike) {:?}", distance);  // distance is also in INTType::Lightning above
 
     let delay_start = Instant::now();
-    while delay_start.elapsed() < Duration::from_millis(10000) {}
+    while delay_start.elapsed() < Duration::from_millis(10000) {
+      ;
+    }
   }
     
 
