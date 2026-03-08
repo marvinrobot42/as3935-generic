@@ -19,7 +19,7 @@ All I2C API functions are implemented.
 - no_std embedded compatible
 - async support included as a feature, default is sync or blocking
 - designed for embedded use (ESP32-C3, -C6 and -S3 and Raspberry Pi, any embedded-hal compatible)
-- examples included (soon!0)
+- examples included (soon!)
 - All IO functions implemented
 - configurable threshold and sensivity and interrupt triggers
 - set indoor or outdoor sensor location
