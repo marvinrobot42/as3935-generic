@@ -76,7 +76,7 @@ where
     //type Error = Error;
     /// create new AS3935 driver with default I2C address: 
     pub fn new(i2c: I2C, address: u8, delayer: D) -> Self {
-        info!("new called");
+        debug!("new called");
         Self {
             i2c,
             address: address,
@@ -131,6 +131,7 @@ where
     pub async fn calibrate_osc(&mut self) -> Result<(), Error<E>> {
 
         // let mut command_buffer: [u8; 1] = [AS3953_DIRECT_COMMAND]
+        debug!("in calibrate_osc");
         self.write_command([AS3935_REG0x3D, AS3953_DIRECT_COMMAND]).await?;
         self.display_oscillator(true, Oscillator::TRCO);
         self.delayer.delay_ms(2).await;
@@ -152,14 +153,14 @@ where
         
     /// reset all settings to defaults
     pub async fn reset_settings(&mut self) -> Result<(), Error<E>> {
-        info!("in reset_settings");
+        debug!("in reset_settings");
         self.write_command([AS3935_REG0x3C, AS3953_DIRECT_COMMAND]).await?;
         Ok(())
     }
 
     /// read lightning energy (unit-less as per datasheet)
     pub async fn get_lightning_energy(&mut self) -> Result<u32, Error<E>> {
-
+        debug!("in get_lightning_energy");
         let mut result_buf: [u8; 1] = [0; 1];
         self.read_register(AS3935_REG0x06, &mut result_buf).await?;
         let mmsb: u8 = (result_buf[0] & 0x3f);
@@ -175,6 +176,7 @@ where
 
     /// display oscillator on IRQ pin
     pub async fn display_oscillator(&mut self, state: bool, osc: Oscillator) -> Result<(), Error<E>> {
+        debug!("in display_oscillator");
         let mut result_buf: [u8; 1] = [0; 1];
         self.read_register(AS3935_REG0x08, &mut result_buf).await?;
         let mut value : u8 = result_buf[0] | (osc as u8); 
@@ -190,7 +192,7 @@ where
 
     /// get distance to storm front in km
     pub async fn get_distance_to_storm(&mut self) -> Result<StormFrontDistance, Error<E>> {
-        info!("in get_distance_to_storm");
+        debug!("in get_distance_to_storm");
         let mut result_buf: [u8; 1] = [0; 1];
         self.read_register(AS3935_REG0x07, &mut result_buf).await?;
         let distance: u8 = result_buf[0] & 0x3f;
@@ -208,13 +210,14 @@ where
     /// power_down
     /// note:  the TRCO oscillator must then be recalibrated
     pub async fn power_down(&mut self) -> Result<(), Error<E>> {
+        debug!("in power_down");
         self.write_command([AS3935_REG0x00, AS3935_POWER_MASK ]).await?;
         Ok(())
     } 
 
     /// set indoor-outdoor location of sensor
     pub async fn set_indoor_outdoor(&mut self, location:  Location) -> Result<(), Error<E>> {
-        info!("in set_indoor_outdoor({:?})", location);
+        debug!("in set_indoor_outdoor({:?})", location);
         let mut location_mask = LocationMask::Indoor;
         info!("  location is {:?} hex = {:02x}", location, location as u8);
     
@@ -224,23 +227,23 @@ where
             location_mask = LocationMask::Outdoor;
         }
 
-        info!("  location_mask = {:02x}", location_mask as u8);
+        debug!("  location_mask = {:02x}", location_mask as u8);
         let mut afe_gain: AFE_GAIN = AFE_GAIN(0x00);
         afe_gain.set_location_mask(location_mask as u8);
-        info!("  afe_gain is {:02x}", afe_gain.0);
+        debug!("  afe_gain is {:02x}", afe_gain.0);
         self.write_command([AS3935_REG0x00, (afe_gain.0 as u8)]).await?;
         Ok(()) 
     }
 
     /// get indoor-outdoor location from sensor
     pub async fn get_indoor_outdoor(&mut self) -> Result<Location, Error<E>> {
-        info!("in get_indoor_outdoor");
+        debug!("in get_indoor_outdoor");
         let mut result_buf: [u8; 1] = [0; 1];
         self.read_register(AS3935_REG0x00, &mut result_buf).await?;
-        info!("  reg0x00 = {:02x}", result_buf[0]);
+        debug!("  reg0x00 = {:02x}", result_buf[0]);
         let afe_gain: AFE_GAIN = AFE_GAIN(result_buf[0]);
-        info!("  afe_gain in hex = {:02x}", afe_gain.0);
-        info!("  afe_gain = {:?}", afe_gain);
+        debug!("  afe_gain in hex = {:02x}", afe_gain.0);
+        debug!("  afe_gain = {:?}", afe_gain);
         let mut where_is_it = Location::Indoor;
         if (afe_gain.get_location_mask() == LocationMask::Indoor) {
             where_is_it = Location::Indoor;
@@ -254,6 +257,7 @@ where
 
     /// get interrupt register
     pub async fn get_interrupt_register(&mut self) -> Result<INTType, Error<E>> {
+        debug!("in get_interrupt_register");
         let mut result_buf: [u8; 1] = [0; 1];
         self.read_register(AS3935_REG0x03, &mut result_buf).await?;
         let int_reg: INTReg = INTReg(result_buf[0]);
@@ -261,19 +265,20 @@ where
         Ok(int_type)
     }
 
-    /// read_interrupt_register, first delay 2msec as per datasheet
-    pub async fn read_interrupt_register(&mut self) -> Result<INTType, Error<E>>  {
-        let mut result_buf: [u8; 1] = [0; 1];
-        self.delayer.delay_ms(2).await;
-        self.read_register(AS3935_REG0x03, &mut result_buf).await?;
-        let int_reg: INTReg = INTReg(result_buf[0]);
-        Ok(int_reg.get_int_type())
-    }
+    //  /// read_interrupt_register, first delay 2msec as per datasheet
+    // pub async fn read_interrupt_register(&mut self) -> Result<INTType, Error<E>>  {
+    //     debug!("in read_interrupt_register";)
+    //     let mut result_buf: [u8; 1] = [0; 1];
+    //     self.delayer.delay_ms(2).await;
+    //     self.read_register(AS3935_REG0x03, &mut result_buf).await?;
+    //     let int_reg: INTReg = INTReg(result_buf[0]);
+    //     Ok(int_reg.get_int_type())
+    // }
 
-    /*******  fns not yet tested ************************** */
+    /*******  fn not yet tested ************************** */
     /// wakup, and then calibrate the oscillators
     pub async fn wakeup(&mut self) -> Result<(), Error<E>> {
-        
+        debug!("in wakeup");
         let mut result_buf: [u8; 1] = [0; 1];
         self.read_register(AS3935_REG0x3A, &mut result_buf).await?;
         let mut afe_gain: AFE_GAIN = AFE_GAIN(result_buf[0]);
@@ -284,8 +289,10 @@ where
 
     }
 
+    // tested
     /// set watchdog threshold, threshold < 11
     pub async fn set_watchdog_threshold(&mut self, threshold: u8 ) -> Result<(), Error<E>> {
+        debug!("in set_watchdog_threshold");
         if (threshold > 10) {
             return Err(Error::ValueLimit);
         }
@@ -297,8 +304,10 @@ where
         Ok(())
     }
 
+    // tested
     /// get watchdog threshold
     pub async fn get_watchdog_threshold(&mut self) -> Result<u8, Error<E>> {
+        debug!("in get_watchdog_threshold");
         let mut result_buf: [u8; 1] = [0; 1];
         self.read_register(AS3935_REG0x01, &mut result_buf).await?;
         let threshold_reg: THRESHOLDS = THRESHOLDS(result_buf[0]);
@@ -306,8 +315,10 @@ where
         Ok(threshold)
     }
 
+    // tested
     /// set noise floor level, level < 8
     pub async fn set_noise_level(&mut self, level: u8 ) -> Result<(), Error<E>> {
+        debug!("in set_noise_level");
         if (level > 7) {
             return Err(Error::ValueLimit);
         }
@@ -319,17 +330,21 @@ where
         Ok(())
     }
 
+    // tested
     /// get noise floor level
     pub async fn get_noise_level(&mut self) -> Result<u8, Error<E>> {
+        debug!("in get_noise_level");
         let mut result_buf: [u8; 1] = [0; 1];
         self.read_register(AS3935_REG0x01, &mut result_buf).await?;
-        let mut threshold_reg: THRESHOLDS = THRESHOLDS(result_buf[0]);
+        let threshold_reg: THRESHOLDS = THRESHOLDS(result_buf[0]);
         let level = threshold_reg.get_noise_floor();
         Ok(level)
     }
 
+    // tested
     /// set lightning threshold (minimum number of lightning strikes)
     pub async fn set_lightning_threshold(&mut self, threshold: MinStrikes ) -> Result<(), Error<E>> {
+        debug!("in set_lightning_threshold");
         let mut result_buf: [u8; 1] = [0; 1];
         self.read_register(AS3935_REG0x02, &mut result_buf).await?;
         let mut lightning_reg: LightningReg = LightningReg(result_buf[0]);
@@ -338,27 +353,34 @@ where
         Ok(())
     }
 
+    // tested
     /// get lightning threshold (minimum number of lightning strikes)
     pub async fn get_lightning_threshold(&mut self) -> Result<MinStrikes, Error<E>> {
+        debug!("in get_lightning_threshold");
         let mut result_buf: [u8; 1] = [0; 1];
         self.read_register(AS3935_REG0x02, &mut result_buf).await?;
-        let mut lightning_reg: LightningReg = LightningReg(result_buf[0]);
+        let lightning_reg: LightningReg = LightningReg(result_buf[0]);
         let min_strikes: MinStrikes = lightning_reg.get_min_strikes();
         Ok(min_strikes)
     }
 
+    // tested
     /// clear statistics :  clears the number of lightning strikes detected in last 15 minutes
     pub async fn clear_statistics(&mut self) -> Result<(), Error<E>> {
+        debug!("in clear_statistics");
         let mut result_buf: [u8; 1] = [0; 1];
         self.read_register(AS3935_REG0x02, &mut result_buf).await?;
         let mut lightning_reg: LightningReg = LightningReg(result_buf[0]);
         lightning_reg.set_clear_stats(true);
+        debug!("  writing lightning_reg = {:?}", lightning_reg);
         self.write_command([AS3935_REG0x02, lightning_reg.0]).await?;
         Ok(())
     }
 
-    /// set mask disturber:  defines if "disturbers" trigger interrupts
+    // tested
+    /// set mask disturber:  defines if "disturbers" trigger interrupts, default is false == not masked
     pub async fn set_mask_disturber(&mut self, enable: bool) -> Result<(), Error<E>> {
+        debug!("in set_mask_disturber");
         let mut result_buf: [u8; 1] = [0; 1];
         self.read_register(AS3935_REG0x03, &mut result_buf).await?;
         let mut int_reg: INTReg = INTReg(result_buf[0]);
@@ -367,16 +389,20 @@ where
         Ok(())
     }
 
+    // tested
     /// get mask disturber: whether disturbers triggers interrupts
     pub async fn get_mask_disturber(&mut self) -> Result<bool, Error<E>> {
+        debug!("in get_mask_disturber");
         let mut result_buf: [u8; 1] = [0; 1];
         self.read_register(AS3935_REG0x03, &mut result_buf).await?;
         let int_reg: INTReg = INTReg(result_buf[0]);
         Ok(int_reg.get_mask_dist())
     }
 
+    // tested
     /// set spike rejection sensitivity  < 16
     pub async fn set_spike_rejection(&mut self, sensitivity: u8) -> Result<(), Error<E>> {
+        debug!("in set_spike_rejection");
         if (sensitivity > 15) {
             return Err(Error::ValueLimit);
         }
@@ -388,8 +414,10 @@ where
         Ok(())
     }
 
+    // tested
     /// get spike rejection sensitivity
     pub async fn get_spike_rejection(&mut self) -> Result<u8, Error<E>> {
+        debug!("in get_spike_rejection");
         let mut result_buf: [u8; 1] = [0; 1];
         let mut result_buf: [u8; 1] = [0; 1];
         self.read_register(AS3935_REG0x02, &mut result_buf).await?;
@@ -398,9 +426,11 @@ where
         Ok(sensitivity)
     }
 
+    // tested
     /// set antenna frequency division ratio for antenna tuning
     /// ratios are:  16, 32, 64 or 128
     pub async fn set_antenna_div_ratio(&mut self, ratio: u8) -> Result<(), Error<E>> {
+        debug!("in set_antenna_div_ratio ( {} )", ratio);
         let mut value: u8 = 0;
         if (ratio == 16) {
             value = 0;
@@ -418,41 +448,50 @@ where
         self.read_register(AS3935_REG0x03, &mut result_buf).await?;
         let mut int_reg: INTReg = INTReg(result_buf[0]);
         int_reg.set_freq_div(value);
+        //info!("  writing value {:02x} and int_reg = {:?}", value, int_reg);
         self.write_command([AS3935_REG0x03, int_reg.0]).await?;
         Ok(())
     }
 
+    // tested
     /// get antenna frequency division ratio for antenna tuning
     pub async fn get_antenna_div_ratio(&mut self) -> Result<u8, Error<E>> {
+        debug!("in get_antenna_div_ratio");
         let mut result_buf: [u8; 1] = [0; 1];
         self.read_register(AS3935_REG0x03, &mut result_buf).await?;
         let mut int_reg: INTReg = INTReg(result_buf[0]);
         let value = int_reg.get_freq_div();
-        let return_value: u8 = (1 << value);
+        let return_value: u8 = (1 << (value + 4));
         Ok((return_value))
     }
 
+    // tested
     /// set tuning cap for antenna
-    /// farads must be <= 128 and modulo 8,  specifically from 0 to 120 pF in steps of 8 pF  
+    /// farads must be <= 128 and modulo 8,  specifically from 0 to 120 pF in steps of 8 pF (modulo 8) 
     pub async fn set_tuning_cap(&mut self, p_farads: u8) -> Result<(), Error<E>> {
+        debug!("in set_tuning_cap( {:02x} )", p_farads);
         if (p_farads > 128) {
             return Err(Error::ValueLimit);
         } else if ((p_farads % 8) != 0) {
+            debug!("  bummer, not modulo 8");
             return Err(Error::ValueLimit);
         }
         let mut result_buf: [u8; 1] = [0; 1];
         self.read_register(AS3935_REG0x08, &mut result_buf).await?;
-        let mut new_value: u8 = result_buf[0] & (p_farads & 0x07);
+        let mut new_value: u8 = (result_buf[0]) | ((p_farads >> 3) & 0x17);
+        //info!("  new tuning cap value to write is {:02x}", new_value);
         self.write_command([AS3935_REG0x08, new_value]).await?;
 
         Ok(())
     }
 
+    // tested
     /// get tuning cap (internal) for antenna in pF, manufacturer default is 0 pF if not changed
     pub async fn get_tuning_cap(&mut self) -> Result<u8, Error<E>> {
+        debug!("in get_tuning_cap");
         let mut result_buf: [u8; 1] = [0; 1];
         self.read_register(AS3935_REG0x08, &mut result_buf).await?;
-        let p_farads: u8 = (result_buf[0] & 0x0f) << 3;
+        let p_farads: u8 = (result_buf[0] & 0x1f) << 3;  // bit [3:0] in steps of 8 pF 
         Ok(p_farads)
     }
 

@@ -102,7 +102,7 @@ bitfield! {
     pub struct LightningReg(u8);
     impl Debug;
 
-    pub bool, _, set_clear_stats: 6;    // Clear statistics
+    pub bool, get_clear_stats, set_clear_stats: 6;    // Clear statistics
     pub into MinStrikes, get_min_strikes, set_min_strikes: 5, 4; // minimum number of lightning strike, default is 0b00        
     pub u8, get_spike_reject, set_spike_reject: 3, 0;   // spike rejection , default 0b0010
 
