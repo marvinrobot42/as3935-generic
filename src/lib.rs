@@ -2,6 +2,13 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
+/* ToDo: 
+    test fn:
+            get_lightning_energy
+            display_oscillator
+*/
+
+
 //#![feature(inherent_associated_types)]
 pub mod error;
 
