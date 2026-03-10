@@ -2,12 +2,6 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-/* ToDo: 
-    test fn:
-            get_lightning_energy
-            display_oscillator
-*/
-
 
 //#![feature(inherent_associated_types)]
 pub mod error;
@@ -51,7 +45,7 @@ where
     D: DelayNs,
 {
     
-    //type Error = Error;
+
     /// create new AS3935 driver with address and delay given
     /// the datasheet states the max speed is 400 kHz with just AS3935 on the bus and external 10 k pull ups
     /// otherwise use 4k7 pulls up and max speed is 100 kHz.  
@@ -80,8 +74,11 @@ where
     I2C: AsyncI2c<Error = E>,
     D: AsyncDelayNs,
 {
-    //type Error = Error;
-    /// create new AS3935 driver with default I2C address: 
+    /// create new AS3935 driver with address and delay given
+    /// the datasheet states the max speed is 400 kHz with just AS3935 on the bus and external 10 k pull ups
+    /// otherwise use 4k7 pulls up and max speed is 100 kHz.  
+    /// Best to use 100 kHz.
+    /// use constant::DeviceAddress::default() with AD1 and AD0 pins high  
     pub fn new(i2c: I2C, address: u8, delayer: D) -> Self {
         debug!("new called");
         Self {
@@ -136,8 +133,6 @@ where
 
     /// calibrate both internal oscillators, first tune your antenna
     pub async fn calibrate_osc(&mut self) -> Result<(), Error<E>> {
-
-        // let mut command_buffer: [u8; 1] = [AS3953_DIRECT_COMMAND]
         debug!("in calibrate_osc");
         self.write_command([AS3935_REG0x3D, AS3953_DIRECT_COMMAND]).await?;
         self.display_oscillator(true, Oscillator::TRCO);
@@ -182,6 +177,8 @@ where
     }
 
     /// display oscillator on IRQ pin
+    /// state = true to turn on, false to turn off
+    /// use a logic analyzer or oscilloscope to see the clock signal.
     pub async fn display_oscillator(&mut self, state: bool, osc: Oscillator) -> Result<(), Error<E>> {
         debug!("in display_oscillator");
         let mut result_buf: [u8; 1] = [0; 1];
@@ -191,13 +188,13 @@ where
             self.write_command([AS3935_REG0x08,  value]).await?;
         } else { // turn off
             value = result_buf[0] & !(osc as u8);
-            self.write_command([AS3935_REG0x08, value]);
+            self.write_command([AS3935_REG0x08, value]).await?;
         }
         Ok(())
     }
 
 
-    /// get distance to storm front in km
+    /// get distance to storm front in km.  > 40 km == OutOfRange
     pub async fn get_distance_to_storm(&mut self) -> Result<StormFrontDistance, Error<E>> {
         debug!("in get_distance_to_storm");
         let mut result_buf: [u8; 1] = [0; 1];
@@ -215,7 +212,7 @@ where
     }
 
     /// power_down
-    /// note:  the TRCO oscillator must then be recalibrated
+    /// note:  the TRCO oscillator must then be recalibrated after power_down() call which is built into wakeup()
     pub async fn power_down(&mut self) -> Result<(), Error<E>> {
         debug!("in power_down");
         self.write_command([AS3935_REG0x00, AS3935_POWER_MASK ]).await?;
@@ -262,7 +259,7 @@ where
         return Ok(where_is_it);
     }
 
-    /// get interrupt register
+    /// get interrupt register:  useful to see what the AS3935 detected
     pub async fn get_interrupt_register(&mut self) -> Result<INTType, Error<E>> {
         debug!("in get_interrupt_register");
         let mut result_buf: [u8; 1] = [0; 1];
@@ -282,7 +279,6 @@ where
     //     Ok(int_reg.get_int_type())
     // }
 
-    /*******  fn not yet tested ************************** */
     /// wakup, and then calibrate the oscillators
     pub async fn wakeup(&mut self) -> Result<(), Error<E>> {
         debug!("in wakeup");
@@ -296,7 +292,6 @@ where
 
     }
 
-    // tested
     /// set watchdog threshold, threshold < 11
     pub async fn set_watchdog_threshold(&mut self, threshold: u8 ) -> Result<(), Error<E>> {
         debug!("in set_watchdog_threshold");
@@ -311,7 +306,6 @@ where
         Ok(())
     }
 
-    // tested
     /// get watchdog threshold
     pub async fn get_watchdog_threshold(&mut self) -> Result<u8, Error<E>> {
         debug!("in get_watchdog_threshold");
@@ -322,7 +316,6 @@ where
         Ok(threshold)
     }
 
-    // tested
     /// set noise floor level, level < 8
     pub async fn set_noise_level(&mut self, level: u8 ) -> Result<(), Error<E>> {
         debug!("in set_noise_level");
@@ -337,7 +330,6 @@ where
         Ok(())
     }
 
-    // tested
     /// get noise floor level
     pub async fn get_noise_level(&mut self) -> Result<u8, Error<E>> {
         debug!("in get_noise_level");
@@ -348,7 +340,6 @@ where
         Ok(level)
     }
 
-    // tested
     /// set lightning threshold (minimum number of lightning strikes)
     pub async fn set_lightning_threshold(&mut self, threshold: MinStrikes ) -> Result<(), Error<E>> {
         debug!("in set_lightning_threshold");
@@ -360,7 +351,6 @@ where
         Ok(())
     }
 
-    // tested
     /// get lightning threshold (minimum number of lightning strikes)
     pub async fn get_lightning_threshold(&mut self) -> Result<MinStrikes, Error<E>> {
         debug!("in get_lightning_threshold");
@@ -371,7 +361,6 @@ where
         Ok(min_strikes)
     }
 
-    // tested
     /// clear statistics :  clears the number of lightning strikes detected in last 15 minutes
     pub async fn clear_statistics(&mut self) -> Result<(), Error<E>> {
         debug!("in clear_statistics");
@@ -384,7 +373,6 @@ where
         Ok(())
     }
 
-    // tested
     /// set mask disturber:  defines if "disturbers" trigger interrupts, default is false == not masked
     pub async fn set_mask_disturber(&mut self, enable: bool) -> Result<(), Error<E>> {
         debug!("in set_mask_disturber");
@@ -396,7 +384,6 @@ where
         Ok(())
     }
 
-    // tested
     /// get mask disturber: whether disturbers triggers interrupts
     pub async fn get_mask_disturber(&mut self) -> Result<bool, Error<E>> {
         debug!("in get_mask_disturber");
@@ -406,7 +393,6 @@ where
         Ok(int_reg.get_mask_dist())
     }
 
-    // tested
     /// set spike rejection sensitivity  < 16
     pub async fn set_spike_rejection(&mut self, sensitivity: u8) -> Result<(), Error<E>> {
         debug!("in set_spike_rejection");
@@ -421,7 +407,6 @@ where
         Ok(())
     }
 
-    // tested
     /// get spike rejection sensitivity
     pub async fn get_spike_rejection(&mut self) -> Result<u8, Error<E>> {
         debug!("in get_spike_rejection");
@@ -433,7 +418,6 @@ where
         Ok(sensitivity)
     }
 
-    // tested
     /// set antenna frequency division ratio for antenna tuning
     /// ratios are:  16, 32, 64 or 128
     pub async fn set_antenna_div_ratio(&mut self, ratio: u8) -> Result<(), Error<E>> {
@@ -460,7 +444,6 @@ where
         Ok(())
     }
 
-    // tested
     /// get antenna frequency division ratio for antenna tuning
     pub async fn get_antenna_div_ratio(&mut self) -> Result<u8, Error<E>> {
         debug!("in get_antenna_div_ratio");
@@ -472,7 +455,6 @@ where
         Ok((return_value))
     }
 
-    // tested
     /// set tuning cap for antenna
     /// farads must be <= 128 and modulo 8,  specifically from 0 to 120 pF in steps of 8 pF (modulo 8) 
     pub async fn set_tuning_cap(&mut self, p_farads: u8) -> Result<(), Error<E>> {
@@ -492,7 +474,6 @@ where
         Ok(())
     }
 
-    // tested
     /// get tuning cap (internal) for antenna in pF, manufacturer default is 0 pF if not changed
     pub async fn get_tuning_cap(&mut self) -> Result<u8, Error<E>> {
         debug!("in get_tuning_cap");

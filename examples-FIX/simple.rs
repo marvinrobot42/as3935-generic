@@ -1,37 +1,79 @@
-// ESP32-C6 based example
+// ESP32-C6 based no_std example
 
-/**** Cargo.toml includes:
+#![no_std]
+#![no_main]
+#![deny(
+    clippy::mem_forget,
+    reason = "mem::forget is generally not safe to do with esp_hal types, especially those \
+    holding buffers for the duration of a data transfer."
+)]
+#![deny(clippy::large_stack_frames)]
 
-[dependencies]
-log = { version = "0.4", default-features = false }
-embedded-svc = "0.25.0"
-esp-idf-svc = { version = "0.48", default-features = false }
-esp-idf-sys = { version = "0.34.0", features = ["binstart"] }
-esp-idf-hal = "0.43.0"
+use esp_backtrace as _;
+use esp_hal::clock::{CpuClock, ModemClockController};
+use esp_hal::main;
+use esp_hal::time::{Duration, Instant};
+use esp_hal::timer::timg::TimerGroup;
+use log::info;
 
-anyhow = "1.0.75"
-bmp38x-ya = "0.1"
+use esp_hal::i2c::master::{Config, I2c};
+use esp_hal::delay::Delay;
 
-[build-dependencies]
-embuild = "0.31.3"
+use as3935_generic::{AS3935, constants::DeviceAddress::{self, AD1_0_AD0_1, AD1_1_AD0_0}, data::Location};
 
-****************/
+#[main]
+fn main() -> ! {
 
-use anyhow::Result;
+    esp_println::logger::init_logger_from_env();
 
-use esp_idf_hal::{
-    delay::{Ets, FreeRtos}, i2c::{I2cConfig, I2cDriver}, io::Error, prelude::*
-};
-use esp_idf_hal::{gpio::PinDriver, prelude::Peripherals};
-use esp_idf_hal::peripheral;
+    let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
+    let peripherals = esp_hal::init(config);
 
-use esp_idf_hal::delay::Delay;
+    esp_alloc::heap_allocator!(#[esp_hal::ram(reclaimed)] size: 65536);
+
+    let timg0 = TimerGroup::new(peripherals.TIMG0);
+    let sw_interrupt =
+        esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);
+    esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);
+ 
+
+    info!("creating i2c, delay and AS3935  instances");
+
+    let mut i2c = I2c::new(peripherals.I2C0, Config::default()).unwrap()
+        .with_sda(peripherals.GPIO6)
+        .with_scl(peripherals.GPIO7);
 
 
-use esp_idf_sys::{self as _};
-use log::{info, error};
+    let my_delay = Delay::new();
 
-use bmp38x_ya::{BMP38x, constants::DeviceAddress, data::{Bmp3Configuration, PowerMode, FilterCoef, Odr, Over_Sampling}};
+    info!("creating AS3935 device");
+    let mut sensor = AS3935::new(i2c, DeviceAddress::default() as u8, my_delay);
+    info!("created AS3935 device");
+    sensor.set_indoor_outdoor(Location::Indoor).unwrap();
+    let location = sensor.get_indoor_outdoor().unwrap();
+    info!(" sensor location is {:?}", location);
+
+    loop {
+        info!("Hello ESP32-C6 no_std world...looping!");
+   
+        let int_reg = sensor.get_interrupt_register().unwrap();
+        match int_reg {
+         as3935_generic::data::INTType::NoiseHigh => log::info!(" AS3935 interrupt register = NoiseHigh"),
+        as3935_generic::data::INTType::Disturber => log::info!(" AS3935 interrupt register = Disturber"),
+        as3935_generic::data::INTType::Lightning => log::info!(" AS3935 interrupt register = Lightning : {:?}", int_reg),
+        as3935_generic::data::INTType::Nothing => log::info!(" AS3935 interrupt register = Nothing"),
+    }
+        
+
+    let delay_start = Instant::now();
+    while delay_start.elapsed() < Duration::from_millis(10000) {
+      ;
+    }
+  }
+    
+
+}
+
 
 
 fn main() -> Result<()> {
