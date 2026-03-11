@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](https://github.com/marvinrobot42/as3935a-generic)
 [![Documentation](https://docs.rs/bmp38x-ya/badge.svg)](https://docs.rs/as3935-generic)
 
-## A Rust crate for ScioSense/Franklin AS3935 lightning detector sensor for generic embedded use.
+## A Rust crate for ScioSense-Franklin AS3935 lightning detector sensor for generic embedded use.
 
 ### Github:  <https://github.com/marvinrobot42/as3935-generic.git>
 
@@ -94,18 +94,20 @@ fn main() -> ! {
   info!(" sensor location is {:?}", location);
 
   loop {
-    info!("Hello ESP32-C6 no_std world...looping!");
+    info!("Hello ESP32-C6 no_std AS3935-generic world...looping!");
    
     let int_reg = sensor.get_interrupt_register().unwrap();
     match int_reg {
       as3935_generic::data::INTType::NoiseHigh => log::info!(" AS3935 interrupt register = NoiseHigh"),
       as3935_generic::data::INTType::Disturber => log::info!(" AS3935 interrupt register = Disturber"),
-      as3935_generic::data::INTType::Lightning => log::info!(" AS3935 interrupt register = Lightning : {:?}", int_reg),
+      as3935_generic::data::INTType::Lightning => {
+            info!(" AS3935 interrupt register = Lightning : {:?}", int_reg);
+            info!(" distance to storm front is (km) {:?}",sensor.get_distance_to_storm().unwrap() );  // in line above also
+            info!(" lightning strike energy is {}", sensor.get_lightning_energy().unwrap());
+      },
       as3935_generic::data::INTType::Nothing => log::info!(" AS3935 interrupt register = Nothing"),
     }
         
-    let distance = sensor.get_distance_to_storm().unwrap();
-    info!(" distance to storm front in km (last lightning strike) {:?}", distance);  // distance is also in INTType::Lightning above
 
     let delay_start = Instant::now();
     while delay_start.elapsed() < Duration::from_millis(10000) {
@@ -119,6 +121,7 @@ fn main() -> ! {
 
 ### For async set as3935-generic dependency features = ["async"] and AS3935::new method requires async I2C and delay 
 ###    parameters.  Default features is sync (blocking)
+### Note that Raspberry Pi Rust is presently lacking a physical implementation of async i2c interface.
 
 
 ### License
