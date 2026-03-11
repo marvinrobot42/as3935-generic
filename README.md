@@ -1,7 +1,7 @@
 # AS3935 &emsp; 
 [![crates.io](https://img.shields.io/crates/v/bmp38x-ya)](https://crates.io/crates/as3935-generic)
-[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](https://github.com/marvinrobot42/as3935a-generic)
-[![Documentation](https://docs.rs/bmp38x-ya/badge.svg)](https://docs.rs/as3935-generic)
+[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](https://github.com/marvinrobot42/as3935-generic)
+[![Documentation](https://docs.rs/as3935-generic/badge.svg)](https://docs.rs/as3935-generic)
 
 ## A Rust crate for ScioSense-Franklin AS3935 lightning detector sensor for generic embedded use.
 
@@ -36,6 +36,7 @@ Developed using Sparkfun AS3935 sensor model: https://www.sparkfun.com/sparkfun-
 
 ### Recent version history
 
+  - 0.1.1  Fixed type-o in README.md
   - 0.1.0  Initial release
 
 
