@@ -36,6 +36,7 @@ Developed using Sparkfun AS3935 sensor model: https://www.sparkfun.com/sparkfun-
 
 ### Recent version history
 
+  - 0.1.2  Added RPi example
   - 0.1.1  Fixed type-o in README.md
   - 0.1.0  Initial release
 
