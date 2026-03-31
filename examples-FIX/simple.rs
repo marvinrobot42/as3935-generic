@@ -58,16 +58,20 @@ fn main() -> ! {
    
         let int_reg = sensor.get_interrupt_register().unwrap();
         match int_reg {
-         as3935_generic::data::INTType::NoiseHigh => log::info!(" AS3935 interrupt register = NoiseHigh"),
-        as3935_generic::data::INTType::Disturber => log::info!(" AS3935 interrupt register = Disturber"),
-        as3935_generic::data::INTType::Lightning => log::info!(" AS3935 interrupt register = Lightning : {:?}", int_reg),
-        as3935_generic::data::INTType::Nothing => log::info!(" AS3935 interrupt register = Nothing"),
-    }
+            as3935_generic::data::INTType::NoiseHigh => log::info!(" AS3935 interrupt register = NoiseHigh"),
+            as3935_generic::data::INTType::Disturber => log::info!(" AS3935 interrupt register = Disturber"),
+            as3935_generic::data::INTType::Lightning => {
+                log::info!(" AS3935 interrupt register = Lightning : {:?}", int_reg);
+                info!(" distance to storm front is (km) {:?}",sensor.get_distance_to_storm().unwrap() );
+                info!(" lightning strike energy is {}", sensor.get_lightning_energy().unwrap());
+            },
+            as3935_generic::data::INTType::Nothing => log::info!(" AS3935 interrupt register = Nothing"),
+        }
         
 
-    let delay_start = Instant::now();
-    while delay_start.elapsed() < Duration::from_millis(10000) {
-      ;
+        let delay_start = Instant::now();
+        while delay_start.elapsed() < Duration::from_millis(10000) {
+        ;
     }
   }
     

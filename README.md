@@ -36,6 +36,7 @@ Developed using Sparkfun AS3935 sensor model: https://www.sparkfun.com/sparkfun-
 
 ### Recent version history
 
+  - 0.1.3  Improved example, tested with real lightning event
   - 0.1.2  Added RPi example
   - 0.1.1  Fixed type-o in README.md
   - 0.1.0  Initial release
@@ -100,14 +101,14 @@ fn main() -> ! {
    
     let int_reg = sensor.get_interrupt_register().unwrap();
     match int_reg {
-      as3935_generic::data::INTType::NoiseHigh => log::info!(" AS3935 interrupt register = NoiseHigh"),
-      as3935_generic::data::INTType::Disturber => log::info!(" AS3935 interrupt register = Disturber"),
+      as3935_generic::data::INTType::NoiseHigh => info!(" AS3935 interrupt register = NoiseHigh"),
+      as3935_generic::data::INTType::Disturber => info!(" AS3935 interrupt register = Disturber"),
       as3935_generic::data::INTType::Lightning => {
             info!(" AS3935 interrupt register = Lightning : {:?}", int_reg);
-            info!(" distance to storm front is (km) {:?}",sensor.get_distance_to_storm().unwrap() );  // in line above also
+            info!(" distance to storm front is (km) {:?}",sensor.get_distance_to_storm().unwrap() );  
             info!(" lightning strike energy is {}", sensor.get_lightning_energy().unwrap());
       },
-      as3935_generic::data::INTType::Nothing => log::info!(" AS3935 interrupt register = Nothing"),
+      as3935_generic::data::INTType::Nothing => info!(" AS3935 interrupt register = Nothing"),
     }
         
 
