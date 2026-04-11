@@ -88,10 +88,11 @@ where
         }
     }
 
-    /// give back the I2C interface
-    pub fn release(self) -> I2C {
-        self.i2c.release;
-    }
+    // give back the I2C interface
+    // Cannot release i2c in embassy async
+    // pub fn release(self) -> I2C {
+    //     self.i2c.release;
+    // }
 
 }
 
