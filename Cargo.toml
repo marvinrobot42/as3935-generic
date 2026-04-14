@@ -1,6 +1,6 @@
 [package]
 name = "as3935-generic"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 
 authors = ["fordauthor42@gmail.com"]

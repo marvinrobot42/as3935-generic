@@ -19,7 +19,7 @@ All I2C API functions are implemented.
 - no_std embedded compatible
 - async support included as a feature, default is sync or blocking
 - designed for embedded use (ESP32-C3, -C6 and -S3 and Raspberry Pi, any embedded-hal compatible)
-- examples included (soon!)
+- examples included, see repo examples folder
 - All IO functions implemented
 - configurable threshold and sensivity and interrupt triggers
 - set indoor or outdoor sensor location
@@ -36,6 +36,7 @@ Developed using Sparkfun AS3935 sensor model: https://www.sparkfun.com/sparkfun-
 
 ### Recent version history
 
+  - 0.1.5  Added Raspberry Pi Pico-2 example using embassy async
   - 0.1.4  Fixed a problem when using embassy-rp for async usage
   - 0.1.3  Improved example, tested with real lightning event
   - 0.1.2  Added RPi example
